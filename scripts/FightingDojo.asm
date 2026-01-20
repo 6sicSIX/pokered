@@ -53,6 +53,12 @@ FightingDojoDefaultScript:
 	call DisplayTextID
 	ret
 
+; ============================================================
+; PATCH: One-time post-Dojo rematch that awards the other Hitmon
+;
+; Requires a new event constant:
+;   EVENT_GOT_SECOND_HITMON
+; ============================================================
 FightingDojoKarateMasterPostBattleScript:
 	ld a, [wIsInBattle]
 	cp $ff
@@ -71,9 +77,55 @@ FightingDojoKarateMasterPostBattleScript:
 	ld a, PAD_CTRL_PAD
 	ld [wJoyIgnore], a
 	SetEventRange EVENT_BEAT_KARATE_MASTER, EVENT_BEAT_FIGHTING_DOJO_TRAINER_3
+
+	; If the dojo has already been cleared, this battle was a rematch.
+	; In that case, (once) award the Hitmon the player didn't choose.
+	CheckEvent EVENT_DEFEATED_FIGHTING_DOJO
+	jr z, .normal_post_battle
+
+	; Rematch path
+	CheckEvent EVENT_GOT_SECOND_HITMON
+	jr nz, .rematch_text
+
+	CheckEitherEventSet EVENT_GOT_HITMONLEE, EVENT_GOT_HITMONCHAN
+	jr z, .rematch_text ; shouldn't happen, but be safe
+
+	CheckEvent EVENT_GOT_HITMONLEE
+	jr nz, .give_hitmonchan
+
+.give_hitmonlee
+	ld a, HITMONLEE
+	ld [wCurPartySpecies], a
+	ld b, a
+	ld c, 30
+	call GivePokemon
+	jr nc, .rematch_text ; party full or failed
+	SetEvent EVENT_GOT_SECOND_HITMON
+	jr .rematch_text
+
+.give_hitmonchan
+	ld a, HITMONCHAN
+	ld [wCurPartySpecies], a
+	ld b, a
+	ld c, 30
+	call GivePokemon
+	jr nc, .rematch_text
+	SetEvent EVENT_GOT_SECOND_HITMON
+
+.rematch_text
+	; Reuse the Karate Master's normal talk text handler; after the second
+	; Hitmon is awarded, it will fall back to the "Stay and train" line.
+	ld a, TEXT_FIGHTINGDOJO_KARATE_MASTER
+	ldh [hTextID], a
+	call DisplayTextID
+	jr .done
+
+.normal_post_battle
 	ld a, TEXT_FIGHTINGDOJO_KARATE_MASTER_I_WILL_GIVE_YOU_A_POKEMON
 	ldh [hTextID], a
 	call DisplayTextID
+
+.done
 	xor a ; SCRIPT_FIGHTINGDOJO_DEFAULT
 	ld [wJoyIgnore], a
 	ld [wFightingDojoCurScript], a
@@ -125,10 +177,44 @@ FightingDojoKarateMasterText:
 	ld [wFightingDojoCurScript], a
 	ld [wCurMapScript], a
 	jr .end
+
 .defeated_dojo
+	; PATCH: Offer one-time rematch if player already picked a Hitmon
+	; and hasn't received the other yet.
+	CheckEvent EVENT_GOT_SECOND_HITMON
+	jr nz, .stay_only
+	CheckEitherEventSet EVENT_GOT_HITMONLEE, EVENT_GOT_HITMONCHAN
+	jr z, .stay_only
+
+	; Reuse existing "Stay and train" text as the rematch prompt.
+	ld hl, .StayAndTrainWithUsText
+	call PrintText
+	call YesNoChoice
+	ld a, [wCurrentMenuItem]
+	and a
+	jr nz, .end
+
+	; Start rematch battle
+	ld hl, wStatusFlags3
+	set BIT_TALKED_TO_TRAINER, [hl]
+	set BIT_PRINT_END_BATTLE_TEXT, [hl]
+	ld hl, .DefeatedText
+	ld de, .DefeatedText
+	call SaveEndBattleTextPointers
+	ldh a, [hSpriteIndex]
+	ld [wSpriteIndex], a
+	call EngageMapTrainer
+	call InitBattleEnemyParameters
+	ld a, SCRIPT_FIGHTINGDOJO_KARATE_MASTER_POST_BATTLE
+	ld [wFightingDojoCurScript], a
+	ld [wCurMapScript], a
+	jr .end
+
+.stay_only
 	ld hl, .StayAndTrainWithUsText
 	call PrintText
 	jr .end
+
 .defeated_master
 	ld hl, .IWillGiveYouAPokemonText
 	call PrintText
