@@ -5,6 +5,10 @@ _CeladonMansionRoofHouseHikerText::
 	cont "your GAME BOY!"
 
 	para "Get together with"
-	line "your friends and"
-	cont "trade #MON!"
+	line "your friends or"
+	cont "play solo!"
+
+	para "Exploring everywhere"
+	line "lets you meet all"
+	cont "kinds of #MON."
 	done

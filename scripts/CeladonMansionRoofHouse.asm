@@ -3,8 +3,10 @@ CeladonMansionRoofHouse_Script:
 
 CeladonMansionRoofHouse_TextPointers:
 	def_text_pointers
-	dw_const CeladonMansionRoofHouseHikerText,         TEXT_CELADONMANSION_ROOF_HOUSE_HIKER
-	dw_const CeladonMansionRoofHouseEeveePokeballText, TEXT_CELADONMANSION_ROOF_HOUSE_EEVEE_POKEBALL
+	dw_const CeladonMansionRoofHouseHikerText,           TEXT_CELADONMANSION_ROOF_HOUSE_HIKER
+	dw_const CeladonMansionRoofHouseEeveePokeballText,   TEXT_CELADONMANSION_ROOF_HOUSE_EEVEE_POKEBALL
+	dw_const CeladonMansionRoofHouseEeveePokeball2Text,  TEXT_CELADONMANSION_ROOF_HOUSE_EEVEE_POKEBALL_2
+	dw_const CeladonMansionRoofHouseEeveePokeball3Text,  TEXT_CELADONMANSION_ROOF_HOUSE_EEVEE_POKEBALL_3
 
 CeladonMansionRoofHouseHikerText:
 	text_far _CeladonMansionRoofHouseHikerText
@@ -16,6 +18,28 @@ CeladonMansionRoofHouseEeveePokeballText:
 	call GivePokemon
 	jr nc, .party_full
 	ld a, TOGGLE_CELADON_MANSION_EEVEE_GIFT
+	ld [wToggleableObjectIndex], a
+	predef HideObject
+.party_full
+	jp TextScriptEnd
+
+CeladonMansionRoofHouseEeveePokeball2Text:
+	text_asm
+	lb bc, EEVEE, 25
+	call GivePokemon
+	jr nc, .party_full
+	ld a, TOGGLE_CELADON_MANSION_EEVEE_GIFT_2
+	ld [wToggleableObjectIndex], a
+	predef HideObject
+.party_full
+	jp TextScriptEnd
+
+CeladonMansionRoofHouseEeveePokeball3Text:
+	text_asm
+	lb bc, EEVEE, 25
+	call GivePokemon
+	jr nc, .party_full
+	ld a, TOGGLE_CELADON_MANSION_EEVEE_GIFT_3
 	ld [wToggleableObjectIndex], a
 	predef HideObject
 .party_full

@@ -165,6 +165,8 @@ ToggleableObjectStates:
 
 	toggleable_objects_for CELADON_MANSION_ROOF_HOUSE
 	toggle_object_state CELADONMANSION_ROOF_HOUSE_EEVEE_POKEBALL, ON
+	toggle_object_state CELADONMANSION_ROOF_HOUSE_EEVEE_POKEBALL_2, ON
+    toggle_object_state CELADONMANSION_ROOF_HOUSE_EEVEE_POKEBALL_3, ON
 
 	toggleable_objects_for GAME_CORNER
 	toggle_object_state GAMECORNER_ROCKET, ON
