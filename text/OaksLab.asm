@@ -340,6 +340,16 @@ _OaksLabOakThatWasMyDreamText::
 	cont "#MON history!"
 	done
 
+_OaksLabOakExtraStartersText::
+	text "Ah! <PLAYER>!"
+	line "I see you have"
+	cont "grown as a"
+	cont "#MON TRAINER!"
+
+	para "Take these"
+	line "#MON as well!"
+	done
+
 _OaksLabRivalLeaveItAllToMeText::
 	text "<RIVAL>: Alright"
 	line "Gramps! Leave it"

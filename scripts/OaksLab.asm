@@ -712,6 +712,84 @@ OaksLabCalcRivalMovementScript:
 	call SetSpritePosition1
 	ret
 
+; Gives the other two starters once, after the player obtains Surf (HM03).
+; Returns carry set if it gave at least one Pokemon (so caller can end the text script).
+OaksLabTryGiveExtraStartersAfterSurf:
+	CheckEvent EVENT_GOT_HM03
+	ret z
+
+	CheckEvent EVENT_OAK_GAVE_EXTRA_STARTERS
+	ret nz
+
+	; Must have already chosen a starter
+	ld a, [wStatusFlags4]
+	bit BIT_GOT_STARTER, a
+	ret z
+
+	; Vanilla Oak line before gifting
+	ld hl, .ExtraStartersText
+	call PrintText
+
+	; Which starter did the player pick?
+	ld a, [wPlayerStarter]
+	cp STARTER1
+	jr z, .picked_starter1
+	cp STARTER2
+	jr z, .picked_starter2
+	; else treat as STARTER3
+	jr .picked_starter3
+
+.picked_starter1
+	; Give STARTER2 then STARTER3
+	lb bc, STARTER2, 5
+	call GivePokemon
+	jr nc, .no_gift
+	lb bc, STARTER3, 5
+	call GivePokemon
+	; if second one fails (party full), player can come back; don't set event yet
+	jr nc, .gifted_some
+	jr .done_all
+
+.picked_starter2
+	; Give STARTER1 then STARTER3
+	lb bc, STARTER1, 5
+	call GivePokemon
+	jr nc, .no_gift
+	lb bc, STARTER3, 5
+	call GivePokemon
+	jr nc, .gifted_some
+	jr .done_all
+
+.picked_starter3
+	; Give STARTER1 then STARTER2
+	lb bc, STARTER1, 5
+	call GivePokemon
+	jr nc, .no_gift
+	lb bc, STARTER2, 5
+	call GivePokemon
+	jr nc, .gifted_some
+	; fallthrough
+
+.done_all
+	SetEvent EVENT_OAK_GAVE_EXTRA_STARTERS
+	scf
+	ret
+
+.gifted_some
+	; Gave at least one, but party got full before giving both.
+	; Do NOT set the event yet, so the player can come back for the last one.
+	scf
+	ret
+
+.no_gift
+	; Party full before giving any
+	and a
+	ret
+
+.ExtraStartersText:
+	text_far _OaksLabOakExtraStartersText
+	text_end
+
 OaksLabLoadTextPointers2Script:
 	ld hl, OaksLab_TextPointers2
 	ld a, l
@@ -964,6 +1042,9 @@ OaksLabLastMonText:
 
 OaksLabOak1Text:
 	text_asm
+	call OaksLabTryGiveExtraStartersAfterSurf
+	jp c, .done
+
 	CheckEvent EVENT_PALLET_AFTER_GETTING_POKEBALLS
 	jr nz, .already_got_poke_balls
 	ld hl, wPokedexOwned
