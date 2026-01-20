@@ -78,7 +78,35 @@ CinnabarLabFossilRoomScientist1Text:
 	ld b, a
 	ld c, 30
 	call GivePokemon
-	jr nc, .done
+	jr c, .party_full
+	; QoL: after reviving one fossil, give the other one too (once).
+	; (Does nothing for OLD_AMBER/AERODACTYL.)
+	; NOTE: define EVENT_GOT_OTHER_FOSSIL_FROM_LAB in your event constants.
+	CheckEvent EVENT_GOT_OTHER_FOSSIL_FROM_LAB
+	jr nz, .done
+	ld a, [wFossilMon]
+	cp OMANYTE
+	jr z, .give_dome_fossil
+	cp KABUTO
+	jr z, .give_helix_fossil
+	; not a Dome/Helix revive (e.g., OLD_AMBER)
+	SetEvent EVENT_GOT_OTHER_FOSSIL_FROM_LAB
+	jr .done
+
+.give_dome_fossil
+	lb bc, DOME_FOSSIL, 1
+	jr .give_other_fossil
+
+.give_helix_fossil
+	lb bc, HELIX_FOSSIL, 1
+
+.give_other_fossil
+	call GiveItem
+	jr c, .done ; bag full, just skip
+	SetEvent EVENT_GOT_OTHER_FOSSIL_FROM_LAB
+	jr .done
+
+.party_full
 	ResetEvents EVENT_GAVE_FOSSIL_TO_LAB, EVENT_LAB_STILL_REVIVING_FOSSIL, EVENT_LAB_HANDING_OVER_FOSSIL_MON
 	jr .done
 
